@@ -1,3 +1,7 @@
+# Продвинутые алгоритмы (задание 02)
+# Необходимо реализовать в классе который получает данные из WoysaClub , асинхронное
+# получение данных, чтобы ускорить процесс  загрузки данных с сайта.
+
 import aiohttp
 import asyncio
 from abc import ABC, abstractmethod
@@ -5,7 +9,6 @@ from bs4 import BeautifulSoup
 from typing import List, Dict
 from concurrent.futures import ThreadPoolExecutor
 import requests
-
 
 class BaseModel(ABC):
     @abstractmethod
@@ -15,7 +18,6 @@ class BaseModel(ABC):
     @abstractmethod
     def to_dict(self) -> Dict:
         pass
-
 
 class WoysaClubParser(BaseModel):
     _instance = None
@@ -34,13 +36,11 @@ class WoysaClubParser(BaseModel):
         self.base_url = "https://woysa.club"
 
     async def fetch_data_async(self, categories: List[str]) -> None:
-        """Асинхронный метод получения данных"""
         async with aiohttp.ClientSession() as session:
             tasks = [self._fetch_category_async(session, category) for category in categories]
             await asyncio.gather(*tasks)
 
     async def _fetch_category_async(self, session: aiohttp.ClientSession, category: str) -> None:
-        """Асинхронная загрузка одной категории"""
         try:
             url = f"{self.base_url}/{category}"
             async with session.get(url) as response:
@@ -53,12 +53,10 @@ class WoysaClubParser(BaseModel):
             self.data[category] = []
 
     def fetch_data_threaded(self, categories: List[str]) -> None:
-        """Многопоточная загрузка данных"""
         with ThreadPoolExecutor() as executor:
             executor.map(self._fetch_category_sync, categories)
 
     def _fetch_category_sync(self, category: str) -> None:
-        """Синхронная загрузка одной категории (для многопоточной версии)"""
         try:
             url = f"{self.base_url}/{category}"
             response = requests.get(url)
@@ -70,7 +68,6 @@ class WoysaClubParser(BaseModel):
             self.data[category] = []
 
     def _parse_category(self, soup: BeautifulSoup) -> List[Dict]:
-        """Парсинг данных категории (примерная реализация)"""
         # Здесь должна быть ваша реальная логика парсинга
         articles = []
         for article in soup.find_all('article', limit=5):  # Пример: берем первые 5 статей
@@ -81,7 +78,6 @@ class WoysaClubParser(BaseModel):
         return articles
 
     async def fetch_data(self, categories: List[str]) -> None:
-        """Основной метод загрузки (для совместимости с базовым классом)"""
         await self.fetch_data_async(categories)
 
     def to_dict(self) -> Dict:
